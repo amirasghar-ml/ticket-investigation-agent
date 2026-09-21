@@ -63,12 +63,7 @@ def _deterministic_report(
             f"(\"{commit.get('message')}\") deployed to auth-service. "
             "`validate_session` now reads token['expires_at'] without a fallback, "
             "which raises KeyError for legacy refresh sessions that omit expiry. "
-            + (
-                f"Affected example user {user['email']} has session_type="
-                f"{user.get('session_type')}."
-                if user
-                else ""
-            )
+            + (_user_clause(user))
         )
         proposed = ProposedFix(
             summary=(
@@ -170,18 +165,43 @@ def _best_commit(evidence: list[ToolResult]) -> dict | None:
     return None
 
 
+def _user_clause(user: dict | None) -> str:
+    if not user or not user.get("email"):
+        return ""
+    session_type = user.get("session_type")
+    if session_type:
+        return (
+            f"Affected example user {user['email']} has session_type={session_type}."
+        )
+    return f"Affected example user {user['email']}."
+
+
+def _as_profile(value: object) -> dict | None:
+    if not isinstance(value, dict):
+        return None
+    if value.get("email") and (value.get("session_type") or value.get("name") or value.get("id")):
+        return value
+    nested = value.get("user")
+    if isinstance(nested, dict) and nested.get("email"):
+        return nested
+    return None
+
+
 def _affected_user(evidence: list[ToolResult]) -> dict | None:
+    profiles: list[dict] = []
+    log_emails: list[str] = []
     for item in evidence:
         data = item.data or {}
-        user = data.get("user")
-        if isinstance(user, dict):
-            if user.get("email"):
-                return user
-            nested = user.get("user")
-            if isinstance(nested, dict) and nested.get("email"):
-                return nested
-        rows = data.get("rows") or data.get("recent_logs") or []
-        for row in rows:
-            if row.get("user_email"):
-                return {"email": row["user_email"]}
+        profile = _as_profile(data.get("user"))
+        if profile:
+            profiles.append(profile)
+        for row in data.get("rows") or data.get("recent_logs") or []:
+            email = row.get("user_email")
+            if email:
+                log_emails.append(email)
+    if profiles:
+        typed = [item for item in profiles if item.get("session_type")]
+        return typed[0] if typed else profiles[0]
+    if log_emails:
+        return {"email": log_emails[0]}
     return None

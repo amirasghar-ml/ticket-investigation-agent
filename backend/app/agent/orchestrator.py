@@ -128,7 +128,7 @@ class SupportTicketAgent:
             status_code = int(extracted.error_code) if extracted.error_code else 500
             path = "/api/auth/login" if extracted.feature == "login" else None
             keywords = extracted.keywords or ([extracted.feature] if extracted.feature else None)
-            hours = 36 if extracted.timeframe else 72
+            hours = 48 if extracted.timeframe else 72
             return self.database.search_logs(
                 keywords=keywords,
                 status_code=status_code if extracted.error_code else None,

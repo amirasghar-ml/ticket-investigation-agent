@@ -27,6 +27,9 @@ def connect() -> sqlite3.Connection:
 
 
 def seed() -> None:
+    from app.demo import refresh_clock
+
+    refresh_clock()
     conn = connect()
     try:
         conn.executescript(

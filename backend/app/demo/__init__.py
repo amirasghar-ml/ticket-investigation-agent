@@ -264,3 +264,32 @@ GITHUB_PRS = [
         "commit_sha": "b71e04aa12",
     },
 ]
+
+
+def refresh_clock() -> None:
+    """Keep demo timestamps relative to now so 'since yesterday' still matches."""
+    now = datetime.now(timezone.utc)
+    yesterday = now - timedelta(days=1)
+    two_days_ago = now - timedelta(days=2)
+    deploy_at = yesterday.replace(hour=9, minute=12, second=0, microsecond=0)
+
+    USERS[0]["last_login_at"] = iso(two_days_ago.replace(hour=18, minute=4))
+    USERS[1]["last_login_at"] = iso(now - timedelta(hours=3))
+
+    APPLICATION_LOGS[0]["ts"] = iso(deploy_at + timedelta(minutes=18))
+    APPLICATION_LOGS[1]["ts"] = iso(deploy_at + timedelta(hours=2, minutes=4))
+    APPLICATION_LOGS[2]["ts"] = iso(now - timedelta(hours=6))
+    APPLICATION_LOGS[3]["ts"] = iso(now - timedelta(hours=2))
+    APPLICATION_LOGS[4]["ts"] = iso(two_days_ago)
+    APPLICATION_LOGS[5]["ts"] = iso(now - timedelta(hours=8))
+
+    ERROR_METRICS["first_seen"] = iso(deploy_at + timedelta(minutes=16))
+    SERVICE_STATUS[0]["deployed_at"] = iso(deploy_at)
+    SERVICE_STATUS[1]["deployed_at"] = iso(now - timedelta(days=12))
+    SERVICE_STATUS[2]["deployed_at"] = iso(now - timedelta(days=4))
+
+    GITHUB_COMMITS[0]["committed_at"] = iso(deploy_at - timedelta(minutes=40))
+    GITHUB_COMMITS[1]["committed_at"] = iso(now - timedelta(days=6))
+    GITHUB_COMMITS[2]["committed_at"] = iso(now - timedelta(days=3))
+    GITHUB_PRS[0]["merged_at"] = iso(deploy_at - timedelta(minutes=25))
+    GITHUB_PRS[1]["merged_at"] = iso(now - timedelta(days=6))
